@@ -84,6 +84,8 @@ inline Measure MeasureString( const std::string& utf8, FT_Face face, bool tightF
 		int glyphRight  = glyphLeft + glyphPixWidth;
 		int glyphBottom = glyphTop + glyphPixHeight;
 
+//std::cout << (uint8_t)ch << "|" << glyphIndex << " : " << glyphLeft << ", " << glyphTop << ", " << glyphRight << ", " << glyphBottom << std::endl;
+
 		if( ! hasInitial ) {
 			xMin = glyphLeft;
 			yMin = glyphTop;
@@ -92,9 +94,11 @@ inline Measure MeasureString( const std::string& utf8, FT_Face face, bool tightF
 			hasInitial = true;
 		}
 
-		yMin = std::min( yMin, glyphTop );
-		xMax = glyphRight;
-		yMax = std::max( yMax, glyphBottom );
+		if( ( glyphPixWidth > 0 ) && ( glyphPixHeight > 0 ) ) {
+			yMin = std::min( yMin, glyphTop );
+			xMax = glyphRight;
+			yMax = std::max( yMax, glyphBottom );
+		}
 
 		pen.x += slot->advance.x;
 		pen.y += slot->advance.y;

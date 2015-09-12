@@ -253,6 +253,7 @@ void Line::calcExtents()
 		FT_Face face = runIt->mFont.getFreetypeFace();
 
 		auto measure = ci::linux::ftutil::MeasureString( runIt->mText, face );
+//std::cout << runIt->mText << " : " << measure << std::endl;		
 
 		mWidth   += measure.getWidth();
 		mAscent  = std::max( runIt->mFont.getAscent(),     mAscent  );
@@ -491,13 +492,14 @@ Surface	TextLayout::render( bool useAlpha, bool premultiplied )
 	Surface result;
 	
 	// determine the extents for all the lines and the result surface
-#if defined( CINDER_ANDDROID ) || defined( CINDER_LINUX )
+#if defined( CINDER_ANDROID ) || defined( CINDER_LINUX )
 	float totalHeight = (float)mVerticalBorder;
 	float maxWidth = 0;
 	for( deque<shared_ptr<Line> >::iterator lineIt = mLines.begin(); lineIt != mLines.end(); ++lineIt ) {
 		(*lineIt)->calcExtents();
 		//totalHeight = std::max( totalHeight, totalHeight + (*lineIt)->mHeight + (*lineIt)->mLeadingOffset );
 		totalHeight = std::max( totalHeight, totalHeight + (*lineIt)->mHeight );
+std::cout << totalHeight << " : " <<  (*lineIt)->mHeight << std::endl;
 		if( (*lineIt)->mWidth > maxWidth ) {
 			maxWidth = (*lineIt)->mWidth;
 		}

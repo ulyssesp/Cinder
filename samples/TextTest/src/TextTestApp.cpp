@@ -40,14 +40,15 @@ void TextTestApp::setup()
 	std::string boldFont( "Arial-BoldMT" );
 	std::string differentFont( "AmericanTypewriter" );
 #elif defined( CINDER_LINUX )
-	std::string normalFont( "Arial Unicode MS" );
-	std::string boldFont( "Arial Unicode MS" );
-	std::string differentFont( "Purisa" );
+	std::string normalFont( "Roboto" );
+	std::string boldFont( "Roboto" );
+	std::string differentFont( "Roboto" );
 #else
 	std::string normalFont( "Arial" );
 	std::string boldFont( "Arial Bold" );
 	std::string differentFont( "Papyrus" );
 #endif
+
 
 	// Japanese
 	unsigned char japanese[] = { 0xE6, 0x97, 0xA5, 0xE6, 0x9C, 0xAC, 0xE8, 0xAA, 0x9E, 0 };
@@ -78,6 +79,8 @@ void TextTestApp::setup()
 	Surface8u rendered = layout.render( true, PREMULT );
 	mTexture = gl::Texture2d::create( rendered );
 
+std::cout << "Texture: " << mTexture->getSize() << std::endl;
+
   try {
 	// Create a custom font by loading it from a resource
 	Font customFont( Font( loadResource( RES_CUSTOM_FONT ), 72 ) );
@@ -90,7 +93,7 @@ void TextTestApp::setup()
 	simple.addLine( "Font From Resource" );
 	mSimpleTexture = gl::Texture2d::create( simple.render( true, PREMULT ) );
 
-  console() << "Rendered simple!" << std::endl;
+std::cout << "Rendered simple: " << mSimpleTexture->getSize()  << std::endl;
   } 
   catch( const std::exception& e ) {
     console() << "ERROR: " << e.what () << std::endl;

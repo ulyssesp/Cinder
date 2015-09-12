@@ -251,8 +251,8 @@ class FontObj {
 	FT_Face mFace;
 #elif defined( CINDER_ANDROID ) || defined( CINDER_LINUX )
 	std::vector<std::pair<uint16_t,uint16_t> >	mUnicodeRanges;
-	void *mFileData = nullptr;
-	FT_Face mFace;
+	BufferRef				mFileData;
+	FT_Face 				mFace;
 #endif 		
 	size_t					mNumGlyphs;
 };
@@ -937,10 +937,11 @@ FontObj::FontObj( DataSourceRef dataSource, float size )
 
 	FT_Set_Pixel_Sizes(mFace, 0, (int)size);
 #elif defined( CINDER_ANDROID ) || defined( CINDER_LINUX )
+	mFileData = dataSource->getBuffer();
 	FT_New_Memory_Face(
 		FontManager::instance()->mLibrary, 
-		(FT_Byte*)dataSource->getBuffer()->getData(), 
-		dataSource->getBuffer()->getSize(), 
+		(FT_Byte*)mFileData->getData(), 
+		mFileData->getSize(), 
 		0, 
 		&mFace
 	);
@@ -964,9 +965,7 @@ FontObj::~FontObj()
 	free(mFileData);
 #elif defined( CINDER_ANDROID ) || defined( CINDER_LINUX )
 	FT_Done_Face( mFace );
-	if( nullptr != mFileData ) {
-		free( mFileData );
-	}
+	mFileData.reset();
 #endif
 }
 
