@@ -1,12 +1,9 @@
 package org.libcinder.hardware;
 
-import org.libcinder.app.CinderNativeActivity;
-
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Point;
 import android.graphics.ImageFormat;
+import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -21,6 +18,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+import org.libcinder.app.CinderNativeActivity;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -72,20 +70,11 @@ public class CameraV2 extends org.libcinder.hardware.Camera {
 
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
-        public void onImageAvailable(ImageReader reader) {
-            lockPixels();
-            try {
-                Image image = reader.acquireLatestImage();
-                if ((null != image) && (image.getPlanes().length > 0)) {
-                    /*
-                    //Log.i(TAG, "Number of planes:" + image.getPlanes().length);
-
-                    //ByteBuffer buf0 = image.getPlanes()[0].getBuffer();
-                    //ByteBuffer buf1 = image.getPlanes()[1].getBuffer();
-                    //ByteBuffer buf2 = image.getPlanes()[2].getBuffer();
-                    //Log.i(TAG, "...plane[0] size:" + buf0.remaining());
-                    //Log.i(TAG, "...plane[1] size:" + buf1.remaining());
-                    //Log.i(TAG, "...plane[2] size:" + buf2.remaining());
+        public void onImageAvailable(final ImageReader reader) {
+            mCameraHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Image image = reader.acquireLatestImage();
 
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
 
@@ -98,15 +87,8 @@ public class CameraV2 extends org.libcinder.hardware.Camera {
                     image = null;
 
                     mNewFrameAvailable.set(true);
-                    */
                 }
-            }
-            finally {
-                unlockPixels();
-
-                reader.close();
-                reader = null;
-            }
+            });
         }
     };
 
@@ -422,6 +404,8 @@ public class CameraV2 extends org.libcinder.hardware.Camera {
     private void startPreview() {
         Log.i(TAG, "startPreview ENTER");
 
+        mNewFrameAvailable.set(false);
+
         try {
             if(null != mCameraHandler) {
                 mCameraHandler.post(new Runnable() {
@@ -452,6 +436,8 @@ public class CameraV2 extends org.libcinder.hardware.Camera {
 
         try {
             mCameraOpenCloseLock.acquire();
+
+            mNewFrameAvailable.set(false);
 
             if(null != mPreviewCaptureSession) {
                 mPreviewCaptureSession.abortCaptures();
@@ -798,7 +784,6 @@ public class CameraV2 extends org.libcinder.hardware.Camera {
         }
 
         startCameraThread();
-        startSession(deviceId);
     }
 
     /** stopCaptureImpl
