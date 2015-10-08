@@ -12,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Environment;
@@ -279,7 +280,7 @@ public class CinderNativeActivity extends NativeActivity {
      * hardware_camera_initialize
      *
      */
-    public void hardware_camera_initialize(final int apiLevel) {
+    public void hardware_camera_initialize() {
         Log.i(TAG, "hardware_camera_initialize");
 
         if(null != mCamera) {
@@ -293,7 +294,7 @@ public class CinderNativeActivity extends NativeActivity {
                 @Override
                 public void run() {
                     //mCamera = Camera.create(Build.VERSION_CODES.KITKAT, activity);
-                    mCamera = Camera.create(apiLevel, activity);
+                    mCamera = Camera.create(Build.VERSION.SDK_INT, activity);
                     mCamera.initialize();
                     condition.open();
                 }
@@ -301,7 +302,7 @@ public class CinderNativeActivity extends NativeActivity {
             condition.block();
         }
         else {
-            mCamera = Camera.create(apiLevel, this);
+            mCamera = Camera.create(Build.VERSION.SDK_INT, this);
         }
     }
 

@@ -166,7 +166,7 @@ dbg_app_fn_enter( __PRETTY_FUNCTION__ );
 		try {
 			jclass javaClass = ci::android::app::CinderNativeActivity::getInstance()->getJavaClass();
 			if( nullptr != javaClass ) {
-				Java::hardware_camera_initialize 				= JniHelper::Get()->GetMethodId( javaClass, "hardware_camera_initialize", "(I)V" );
+				Java::hardware_camera_initialize 				= JniHelper::Get()->GetMethodId( javaClass, "hardware_camera_initialize", "()V" );
 				Java::hardware_camera_enumerateDevices 			= JniHelper::Get()->GetMethodId( javaClass, "hardware_camera_enumerateDevices", "()[Lorg/libcinder/hardware/Camera$DeviceInfo;" );
 				Java::hardware_camera_startCapture 				= JniHelper::Get()->GetMethodId( javaClass, "hardware_camera_startCapture", "(Ljava/lang/String;II)V" );
 				Java::hardware_camera_stopCapture 				= JniHelper::Get()->GetMethodId( javaClass, "hardware_camera_stopCapture", "()V" );
@@ -291,7 +291,7 @@ void Camera::initialize()
 {
 	jobject javaObject = ci::android::app::CinderNativeActivity::getJavaObject();
 	jint apiLevel = __ANDROID_API__;
-	JniHelper::Get()->CallVoidMethod( javaObject, Java::hardware_camera_initialize, apiLevel );
+	JniHelper::Get()->CallVoidMethod( javaObject, Java::hardware_camera_initialize );
 }
 
 std::vector<Camera::DeviceInfoRef> Camera::enumerateDevices() const
