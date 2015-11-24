@@ -23,32 +23,30 @@
 #include "cinder/UrlImplCurl.h"
 
 #include <curl/curl.h>
-#include <boost/noncopyable.hpp>
 
 namespace cinder {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // CURLLib
-class CURLLib : private boost::noncopyable
-{
+class CURLLib {
 public:
 	CURLLib();
 	~CURLLib();
 
 	static CURLLib*		instance();
 
-	static CURLLib	*sInstance;
+private:
+	CURLLib( const CURLLib& );
+	CURLLib& operator=( const CURLLib& );
+
+	static std::unique_ptr<CURLLib> sInstance;
 };
 
-CURLLib *CURLLib::sInstance = 0;
+std::unique_ptr<CURLLib> CURLLib::sInstance;
 
 CURLLib::CURLLib()
 {
-#if defined( CINDER_MSW )
-	curl_global_init( CURL_GLOBAL_WIN32 );
-#else
 	curl_global_init( CURL_GLOBAL_NOTHING );
-#endif	
 }
 
 CURLLib::~CURLLib()
@@ -58,9 +56,10 @@ CURLLib::~CURLLib()
 
 CURLLib* CURLLib::instance()
 {
-	if( ! sInstance )
-		sInstance = new CURLLib;
-	return sInstance;
+	if( ! sInstance ) {
+		sInstance.reset( new CURLLib() );
+	}
+	return sInstance.get();
 }
 
 IStreamUrlImplCurl::IStreamUrlImplCurl( const std::string &url, const std::string &user, const std::string &password, const UrlOptions &options )

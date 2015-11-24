@@ -34,6 +34,8 @@
 
 namespace cinder { namespace app {
 
+static AppImplAndroid* sInstance = nullptr;
+
 AppImplAndroid::TrackedTouch::TrackedTouch( int aId, float aX, float aY, double aCurrentTime )
 	: id( aId ), x( aX ), y( aY ), prevX( aX ), prevY( aY ), currentTime( aCurrentTime )
 {
@@ -51,6 +53,8 @@ void AppImplAndroid::TrackedTouch::update( float aX, float aY, double aCurrentTi
 AppImplAndroid::AppImplAndroid( AppAndroid *aApp, const AppAndroid::Settings &settings )
 	: mApp( aApp ), mSetupHasBeenCalled( false ), mCanProcessEvents( false ), mActive( false ) //, mFocused( false )
 {
+	sInstance = this;
+
 	EventManagerAndroid::instance()->setAppImplInst( this );
 	mNativeApp = EventManagerAndroid::instance()->getNativeApp();
 
@@ -81,6 +85,11 @@ AppImplAndroid::AppImplAndroid( AppAndroid *aApp, const AppAndroid::Settings &se
 
 AppImplAndroid::~AppImplAndroid()
 {
+}
+
+AppImplAndroid *AppImplAndroid::getInstance()
+{
+	return sInstance;
 }
 
 AppAndroid* AppImplAndroid::getApp() 
@@ -170,7 +179,10 @@ void AppImplAndroid::onTouchBegan( int id, float x, float y )
 		if( -1 == mMouseTouchId ) {
 			mMouseTouchId = id;
 			mMouseTouchPos = ivec2( tt.x, tt.y );
-			MouseEvent event( getWindow(), MouseEvent::LEFT_DOWN, tt.x, tt.y, 0, 0.0f, 0 );
+
+			int initiator = MouseEvent::LEFT_DOWN;
+			int modifier = MouseEvent::LEFT_DOWN;
+			MouseEvent event( getWindow(), initiator, tt.x, tt.y, modifier, 0.0f, 0 );
 			getWindow()->emitMouseDown( &event );
 		}
 	}
@@ -238,7 +250,9 @@ void AppImplAndroid::onTouchesMoved( const std::vector<AppImplAndroid::TrackedTo
 				TrackedTouch& tt = iter->second;
 				mMouseTouchPos = ivec2( tt.x, tt.y );
 				
-				MouseEvent event( getWindow(), MouseEvent::LEFT_DOWN, tt.x, tt.y, 0, 0.0f, 0 );
+				int initiator = MouseEvent::LEFT_DOWN;
+				int modifier = MouseEvent::LEFT_DOWN;
+				MouseEvent event( getWindow(), initiator, tt.x, tt.y, modifier, 0.0f, 0 );
 				getWindow()->emitMouseDrag( &event );	
 			}
 		}
@@ -267,7 +281,10 @@ void AppImplAndroid::onTouchEnded( int id, float x, float y )
 		else {
 			if( id == mMouseTouchId ) {
 				mMouseTouchId = -1;
-				MouseEvent event( getWindow(), MouseEvent::LEFT_DOWN, tt.x, tt.y, 0, 0.0f, 0 );
+				
+				int initiator = MouseEvent::LEFT_DOWN;
+				int modifier = MouseEvent::LEFT_DOWN;
+				MouseEvent event( getWindow(), initiator, tt.x, tt.y, modifier, 0.0f, 0 );
 				getWindow()->emitMouseUp( &event );
 			}
 		}
@@ -511,6 +528,16 @@ fs::path AppImplAndroid::getFolderPath( const fs::path &initialPath )
 	throw (std::string(__FUNCTION__) + " not implemented yet").c_str();
 
 	return fs::path();
+}
+
+ivec2 AppImplAndroid::getScreenSize() const
+{
+	ivec2 result = ivec2( 0 );
+	if( nullptr != mNativeApp->window ) {
+		result.x = ANativeWindow_getWidth( mNativeApp->window );
+		result.y = ANativeWindow_getHeight( mNativeApp->window );
+	}
+	return result;
 }
 
 } } // namespace cinder::app

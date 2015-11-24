@@ -16,7 +16,7 @@ if (( $# == 0 )); then
     echo -e "\t-es31   Build for OpenGL ES 3.1 instead of OpenGL ES 3"
     echo -e "\t-r      Rebuild instead of full build"
     echo -e "\t-v      Turns on verbose mode"
-    #echo -e "\t-clang  Uses clang toolchain (experimental)"
+    echo -e "\t-clang  Uses clang toolchain (experimental)"
     echo -e ""
     exit 0
 fi
@@ -25,12 +25,18 @@ fi
 PLATFORMS=(19 21)
 ARCHS=(armeabi armeabi-v7a x86 mips arm64-v8a x86_64 mips64)
 BUILDTYPES=(Debug Release)
-NUMPROCS=4
-ES2=
-ES2_INFO=
+GLES=
+GLES_INFO=
 FULLBUILD=true
 VERBOSE=
 TOOLCHAIN=gcc49
+STL=gnustl
+
+if [[ "$(uname -s)" == *"Linux"* ]]; then
+	NUMPROCS=$(nproc)
+elif [[ "$(uname -s)" == *"Darwin"* ]]; then
+    NUMPROCS=$(sysctl -n hw.ncpu)
+fi
 
 # Process arguments
 while (( $# >= 1 )) 
@@ -139,19 +145,20 @@ do
 
         # OpenGL ES 2.0
         -es2)
-            ES2="-DNDK_GLES2=1"
-            ES2_INFO="GLES2: true"
+            GLES="-DNDK_GLES2=1"
+            GLES_INFO="GLES2: true"
         ;;
 
         # OpenGL ES 3.1
         -es31)
-            ES2="-DNDK_GLES31=1"
-            ES2_INFO="GLES31: true"
+            GLES="-DNDK_GLES31=1"
+            GLES_INFO="GLES31: true"
         ;;
 
         # Clang
         -clang)
             TOOLCHAIN=clang
+			#STL=libc++
         ;;
 
         # Rebuild
@@ -199,37 +206,41 @@ for plat in ${PLATFORMS[@]}; do
 
             # Architecture directory
             arch_dir=$arch
-            if [ -n "$ES2" ]; then 
-                arch_dir=$arch-GLES2
+            if [ "$GLES" == "-DNDK_GLES2=1" ]; then
+                arch_dir=$arch-es2
+            elif [ "$GLES" == "-DNDK_GLES31=1" ]; then
+                arch_dir=$arch-es31
+            else
+                arch_dir=$arch-es3
             fi
 
             # CMake build directory
-            cmake_build_dir=${SAVED_DIR}/build/$arch_dir/$plat/$build
+            cmake_build_dir=${SAVED_DIR}/${build}/${arch_dir}/${plat}
 
             # Build commands
-            echo -e "\n(CINDER-ANDROID): Building: android-$plat $arch $build"
+            echo -e "\n(CINDER-ANDROID): Building: android-${plat} ${arch} ${build}"
         
             cd $SAVED_DIR
             echo "(CINDER-ANDROID): Changed dir: $(pwd)"
 
             # If rebuilding, don't remove the directory
             if [ $FULLBUILD == true ]; then
-                echo "(CINDER-ANDROID): Full build - removing: $cmake_build_dir"
+                echo "(CINDER-ANDROID): Full build - removing: ${cmake_build_dir}"
                 rm -rf ${cmake_build_dir}
             else 
-                echo "(CINDER-ANDROID): (SKIPPED) Full build - removing: $cmake_build_dir"
+                echo "(CINDER-ANDROID): (SKIPPED) Full build - removing: ${cmake_build_dir}"
             fi
 
             # Create any directories we need
-            mkdir -p ./build/$arch_dir/$plat/$build
-            cd ./build/$arch_dir/$plat/$build
+            mkdir -p ./${build}/$arch_dir/$plat
+            cd ./${build}/$arch_dir/$plat
             echo "(CINDER-ANDROID): Changed dir: $(pwd)"
             
             # cmake
-            cmake ../../../.. -DCMAKE_BUILD_TYPE=$build -DNDK_ARCH=$arch -DNDK_PLATFORM=$plat -DNDK_TOOLCHAIN=${TOOLCHAIN} ${ES2}
+            cmake ../../.. -DCMAKE_BUILD_TYPE=${build} -DNDK_ARCH=${arch} -DNDK_PLATFORM=${plat} -DNDK_TOOLCHAIN=${TOOLCHAIN} -DNDK_STL=${STL} ${GLES}
             if [ $? -ne 0 ]
             then
-                echo -e "\n(CINDER-ANDROID): CMake failed for PLATFORM: android-$plat, ARCH: $arch, BUILD_TYPE: $build"
+                echo -e "\n(CINDER-ANDROID): CMake failed for PLATFORM: android-${plat}, ARCH: ${arch}, BUILD_TYPE: ${build}"
                 exit 1
             fi
 
@@ -237,7 +248,7 @@ for plat in ${PLATFORMS[@]}; do
             make -j ${NUMPROCS} ${VERBOSE}
             if [ $? -ne 0 ]
             then
-                echo -e "\n(CINDER-ANDROID): Compile (make) failed for PLATFORM: android-$plat, ARCH: $arch, BUILD_TYPE: $build ${ES2_INFO}"
+                echo -e "\n(CINDER-ANDROID): Compile (make) failed for PLATFORM: android-${plat}, ARCH: ${arch}, BUILD_TYPE: $build ${GLES_INFO}"
                 exit 1
             fi
         done
