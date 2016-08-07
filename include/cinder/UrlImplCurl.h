@@ -23,9 +23,7 @@
 #pragma once
 
 #include "cinder/Url.h"
-
-typedef void CURL;
-typedef void CURLM;
+#include <curl/curl.h>
 
 namespace cinder {
 

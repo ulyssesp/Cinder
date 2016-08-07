@@ -21,7 +21,6 @@
 */
 
 #include "cinder/UrlImplCurl.h"
-#include <curl/curl.h>
 
 namespace cinder {
 
